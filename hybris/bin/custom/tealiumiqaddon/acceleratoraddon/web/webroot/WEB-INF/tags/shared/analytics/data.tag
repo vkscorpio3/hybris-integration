@@ -2,7 +2,9 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ tag import="com.tealium.dataconnector.hybris.HybrisDataConverter" %>
+<%@ tag import="com.tealium.dataconnector.hybris.TealiumCustomData" %>
 
+<% HybrisDataConverter.registerCustomDataClass("tlm", new TealiumCustomData()); %>
 
 <%--           ------            Get Page Type         ------           --%>
 
