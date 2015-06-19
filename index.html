@@ -1,0 +1,446 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Tealium hybris Integration by patrickmcwilliams</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1 class="header">Tealium hybris Integration</h1>
+        <p class="header">Adding TealiumIQ to hybris</p>
+
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/patrickmcwilliams/hybris-integration/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/patrickmcwilliams/hybris-integration/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/patrickmcwilliams/hybris-integration">View On GitHub</a></li>
+        </ul>
+
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/patrickmcwilliams">patrickmcwilliams</a></p>
+
+
+      </header>
+      <section>
+        <h1>
+<a id="hybrisintegration" class="anchor" href="#hybrisintegration" aria-hidden="true"><span class="octicon octicon-link"></span></a>HybrisIntegration</h1>
+
+<p>Hybris Integration for TealiumIQ</p>
+
+<p>This is a simple setup guide to integrate the tealiumiqaddon addon for Hybris. To setup tealiumiqaddon to work with your vendors after successful install, please contact your account manager.</p>
+
+<h2></h2>
+
+<h3>
+<a id="prerequisites" class="anchor" href="#prerequisites" aria-hidden="true"><span class="octicon octicon-link"></span></a>Prerequisites</h3>
+
+<ul>
+<li>A Tealium IQ account.</li>
+<li>hybris v5.0.1+ extracted and built, including the B2C Commerce Accelerator.</li>
+</ul>
+
+<h2></h2>
+
+<h3>
+<a id="installing-addon" class="anchor" href="#installing-addon" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installing Addon</h3>
+
+<ol>
+<li>Place the "tealiumiqaddon" directory into <code>${HYBRIS_BIN}/custom</code>. This directory is in the <code>/hybris/bin/custom/</code> folder in this repo.</li>
+<li>Add <code>&lt;extension dir="${HYBRIS_BIN}/custom/tealiumiqaddon"/\&gt;</code> to your <code>config/localextensions.xml</code>.</li>
+<li>Add tealiumiqaddon to yacceleratorstorefront by using: 
+
+<ul>
+<li><code>sudo ant addoninstall -Daddonnames="tealiumiqaddon" -DaddonStorefront.yacceleratorstorefront="yacceleratorstorefront"</code></li>
+</ul>
+</li>
+<li>Update Files: 
+
+<ul>
+<li>
+<code>${HYBRIS_BIN}/ext-template/yacceleratorstorefront/web/webroot/WEB-INF/tags/desktop/template/master.tag</code> by adding:
+
+<ol>
+<li>
+<code>&lt;%@ taglib prefix="tealiumiqaddon" tagdir="/WEB-INF/tags/addons/tealiumiqaddon/shared/analytics" %&gt;</code> at the top of the file</li>
+<li>
+<code>&lt;tealiumiqaddon:sync/&gt;</code> after the <code>&lt;head&gt;</code> tag</li>
+<li>
+<code>&lt;tealiumiqaddon:tealium/&gt;</code> after the <code>&lt;body&gt;</code> tag</li>
+</ol>
+</li>
+<li>
+<code>${HYBRIS_BIN}/custom/tealiumiqaddon/project.properties.template</code> by changing:
+
+<ol>
+<li>
+<strong>tealiumiqaddon.account</strong>, <strong>tealiumiqaddon.profile</strong>, and <strong>tealiumiqaddon.target</strong> to your tealiumIQ account specific information.</li>
+<li>modify <code>tealiumiqaddon.utagSyncEnabled = 1</code> if you want to enable <strong>utag.sync.js</strong> injection into the <code>&lt;head&gt;</code> </li>
+</ol>
+</li>
+</ul>
+</li>
+</ol>
+
+<h2></h2>
+
+<h3>
+<a id="adding-custom-data" class="anchor" href="#adding-custom-data" aria-hidden="true"><span class="octicon octicon-link"></span></a>Adding Custom Data</h3>
+
+<p>By default, the addon provides a comprehensiv list of standard e-commerce variables. If these default values are not enough for your installation, you can extend the default page types as well as create new custom page types.</p>
+
+<ol>
+<li>
+<p>Create a new class implementing the interface <code>com.tealium.dataconnector.hybris.HybrisDataConverter.HybrisCustomDataConverter</code> and implement all methods of the interface.</p>
+
+<p>example:</p>
+
+<pre><code>package com.tealium.dataconnector.hybris;
+import com.tealium.dataconnector.hybris.HybrisDataConverter.HybrisCustomDataConverter;
+import com.tealium.dataconnector.hybris.HybrisDataConverter.HybrisCustomPageTypeCustomData;
+import com.tealium.util.udohelpers.UDO;
+import com.tealium.util.udohelpers.exceptions.UDOUpdateException;
+
+public class TealiumCustomData implements HybrisCustomDataConverter {
+    ... add unimplemented methods of interface.
+}
+</code></pre>
+</li>
+<li>
+<p>Make sure <strong>if you are not adding values</strong> to any of the methods of the interface, return the <code>udo</code> object.</p>
+
+<p>example:</p>
+
+<pre><code>@Override
+public UDO homePage(UDO udo) {
+    return udo;
+}
+</code></pre>
+</li>
+<li>
+<p>To add or modify values to a default page, add to the override method for that page:</p>
+
+<p>example:</p>
+
+<pre><code>@Override
+public UDO searchPage(UDO udo) {
+    try {
+        udo.setValue("page_name", "new search page name");
+        udo.setValue("custom_key", "custom_value");
+    } catch (UDOUpdateException e) {
+        e.printStackTrace();
+    }
+    return udo;
+}
+</code></pre>
+</li>
+<li>
+<p>To add a new page type with values, add a static variable to your class and add new pages to the <code>addCustomPages</code> method</p>
+
+<p>example:</p>
+
+<pre><code>public class TealiumCustomData implements HybrisCustomDataConverter {
+    private static Map&lt;String, HybrisCustomPageTypeCustomData&gt; customPagesMap;
+
+    @Override
+    public Map&lt;String, HybrisCustomPageTypeCustomData&gt; getHybrisCustomPageTypes() {
+        return customPagesMap;
+    }
+    ... other methods
+    @Override
+    public void addCustomPages() {
+        if (customPagesMap == null){
+            customPagesMap = new HashMap&lt;&gt;();
+        }
+        customPagesMap.put("custom_one", new HybrisCustomPageTypeCustomData(){
+
+            @Override
+            public UDO getCustomDataUdo(UDO udo) {
+                try {
+                    udo.setValue("page_name", "custom page 1");
+                    udo.setValue("custom_page1_key", "custom value");
+                } catch (UDOUpdateException e) {
+                    e.printStackTrace();
+                }
+                return udo;
+            }
+
+        }); 
+
+        customPagesMap.put("custom_two", new HybrisCustomPageTypeCustomData(){
+
+            @Override
+            public UDO getCustomDataUdo(UDO udo) {
+                try {
+                    udo.setValue("page_name", "custom page 2");
+                    udo.setValue("custom_page2_key", "custom value");
+                } catch (UDOUpdateException e) {
+                    e.printStackTrace();
+                }
+                return udo;
+            }
+
+        });     
+    }
+}
+</code></pre>
+</li>
+<li>
+<p>Modify: <code>${HYBRIS_BIN}/custom/tealiumiqaddonweb/webroot/WEB-INF/tags/addons/tealiumiqaddon/shared/analytics/data.tag</code></p>
+
+<ul>
+<li>  add your new class: <code>&lt;%@ tag import="com.tealium.dataconnector.hybris.CLASS_NAME" %&gt;</code>
+</li>
+<li>  register the new class with HybrisDataConverter: <code>&lt;% HybrisDataConverter.registerCustomDataClass("ID", new CLASS_NAME()); %&gt;</code>
+</li>
+</ul>
+</li>
+</ol>
+
+<p><strong>In this repo, there is a <code>custom-data</code> branch with an already built custom class</strong></p>
+
+<h2></h2>
+
+<h3>
+<a id="finish" class="anchor" href="#finish" aria-hidden="true"><span class="octicon octicon-link"></span></a>Finish</h3>
+
+<p>Rebuild and restart hybris.</p>
+
+<p><code>sudo ant all</code></p>
+
+<p><code>sudo ./hybrisserver.sh</code></p>
+
+<h2></h2>
+
+<h3>
+<a id="deafult-data-sources" class="anchor" href="#deafult-data-sources" aria-hidden="true"><span class="octicon octicon-link"></span></a>Deafult data sources</h3>
+
+<p><strong><em>All Pages</em></strong></p>
+
+<pre><code>page_name
+Contains a user-friendly page name
+</code></pre>
+
+<pre><code>site_region
+Includes values for region or localized version, e.g. en_US
+</code></pre>
+
+<pre><code>site_currency
+Contains the currency shown on site, e.g. USD
+</code></pre>
+
+<pre><code>page_type
+Contains a user-friendly page type, e.g. cart page
+</code></pre>
+
+<h2></h2>
+
+<h2></h2>
+
+<p><strong><em>Search Page</em></strong></p>
+
+<pre><code>search_results
+Contains the number of results returned with a search query
+</code></pre>
+
+<pre><code>search_keyword
+Contains the search query conducted by user
+</code></pre>
+
+<h2></h2>
+
+<h2></h2>
+
+<p><strong><em>Category Pages</em></strong></p>
+
+<pre><code>page_category_name
+Contains a user-friendly category name, e.g. appliances
+</code></pre>
+
+<h2></h2>
+
+<h2></h2>
+
+<p><strong><em>Product Page</em></strong></p>
+
+<pre><code>product_id
+Contains product ID(s) - multiple values should be comma-separated
+</code></pre>
+
+<pre><code>product_sku
+Contains product SKU(s) - multiple values should be comma-separated
+</code></pre>
+
+<pre><code>product_name
+Contains product name(s) - multiple values should be comma-separated
+</code></pre>
+
+<pre><code>product_brand
+Contains product brand(s) - multiple values should be comma-separated
+</code></pre>
+
+<pre><code>product_category
+Contains product category(s) - multiple values should be comma-separated
+</code></pre>
+
+<pre><code>product_subcategory
+Contains product subcategory(s) - multiple values should be comma-separated
+</code></pre>
+
+<pre><code>product_unit_price
+Contains product unit price(s) - multiple values should be comma-separated
+</code></pre>
+
+<h2></h2>
+
+<h2></h2>
+
+<p><strong><em>Cart Page</em></strong></p>
+
+<pre><code>product_id
+Contains product ID(s) - multiple values should be comma-separated
+</code></pre>
+
+<pre><code>product_sku
+Contains product SKU(s) - multiple values should be comma-separated
+</code></pre>
+
+<pre><code>product_name
+Contains product name(s) - multiple values should be comma-separated
+</code></pre>
+
+<pre><code>product_brand
+Contains product brand(s) - multiple values should be comma-separated
+</code></pre>
+
+<pre><code>product_category
+Contains product category(s) - multiple values should be comma-separated
+</code></pre>
+
+<pre><code>product_subcategory
+Contains product subcategory(s) - multiple values should be comma-separated
+</code></pre>
+
+<pre><code>product_unit_price
+Contains product unit price(s) - multiple values should be comma-separated
+</code></pre>
+
+<pre><code>product_quantity
+Contains product quantity(s) - multiple values should be comma-separated
+</code></pre>
+
+<h2></h2>
+
+<h2></h2>
+
+<p><strong><em>Order Confirmation</em></strong></p>
+
+<pre><code>order_id
+Contains the order or transaction ID
+</code></pre>
+
+<pre><code>order_subtotal
+Contains the order payment type
+</code></pre>
+
+<pre><code>order_payment_type
+Contains the order payment type
+</code></pre>
+
+<pre><code>order_total
+Contains the order total value
+</code></pre>
+
+<pre><code>order_discount
+Contains the order discount (if any)
+</code></pre>
+
+<pre><code>order_shipping
+Contains the order shipping value
+</code></pre>
+
+<pre><code>order_tax
+Contains the order tax amount
+</code></pre>
+
+<pre><code>order_currency
+Contains the currency associated with the transaction, e.g. USD'
+</code></pre>
+
+<pre><code>order_coupon_code
+Contains the order coupon code
+</code></pre>
+
+<pre><code>order_type
+Contains the order/cart
+</code></pre>
+
+<pre><code>product_id
+Contains product ID(s) - multiple values should be comma-separated
+</code></pre>
+
+<pre><code>product_sku
+Contains product SKU(s) - multiple values should be comma-separated
+</code></pre>
+
+<pre><code>product_name
+Contains product name(s) - multiple values should be comma-separated
+</code></pre>
+
+<pre><code>product_brand
+Contains product brand(s) - multiple values should be comma-separated
+</code></pre>
+
+<pre><code>product_category
+Contains product category(s) - multiple values should be comma-separated
+</code></pre>
+
+<pre><code>product_subcategory
+Contains product subcategory(s) - multiple values should be comma-separated
+</code></pre>
+
+<pre><code>product_unit_price
+Contains product unit price(s) - multiple values should be comma-separated
+</code></pre>
+
+<pre><code>product_quantity
+Contains product quantity(s) - multiple values should be comma-separated
+</code></pre>
+
+<pre><code>customer_email
+Contains the customer email
+</code></pre>
+
+<h2></h2>
+
+<h2></h2>
+
+<p><strong><em>Customer Info Page</em></strong></p>
+
+<pre><code>customer_name
+Contains the customer username
+</code></pre>
+
+<pre><code>customer_email
+Contains the customer email
+</code></pre>
+
+<pre><code>gender
+Contains the customer gender based on salutation
+</code></pre>
+      </section>
+      <footer>
+        <p><small>Hosted on <a href="https://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+		
+  </body>
+</html>
